@@ -9,21 +9,25 @@ pragma solidity >=0.4.2 <0.7.0;
 //app.Candidatos(1)
 contract Election {
     
-    // Adicionar candidato apenas o criador do contrato - OK
-    // Garantir que haverá apenas um voto por eleitor - OK
-    // Adicionar lista de eleitores - OK
-    // Funcao que torna o vencedor - OK
-    // Lista os candidatos em ordem de quantidade de votos
+    // Apenas o criador do contrato pode adicionar um candidato
+    // Apenas o criador do contrato pode adicionar um eleitor
+    // Adicionar um voto
+    // Apenas um voto por eleitor
+    // Listar os candidatos
+    // Retorna o vencedor
+    // Visualiza se um eleitor especifico ja votou ou nao
 
     // Modela um candidato
     struct Candidato {
         uint id;
+        address conta;
         string nome;
         string proposta;
         uint contagem;
     }
 
     struct Eleitor {
+        uint id;
         address conta;
         bool votou;
     }
@@ -35,10 +39,10 @@ contract Election {
     mapping(address => Eleitor) public Eleitores;
 
     // Guarda o total de candidatos que tem em uma eleicao
-    uint public totalCandidatos;
+    uint public totalCandidatos = 0;
 
     // Guarda o total de candidatos que tem em uma eleicao
-    uint public totalEleitores;
+    uint public totalEleitores = 0;
 
     // Salva o usuario criador do contrato
     address public criador;
@@ -46,45 +50,51 @@ contract Election {
     // Inicializa a eleicao com os candidatos
     constructor () public {
         criador = msg.sender;
-        addCandidato("Candidato 1","Proposta do candidato 1");
-        addCandidato("Candidato 2","Proposta do candidato 2");
-        addCandidato("Candidato 3","Proposta do candidato 3");
-        addEleitor(address(0x79BCe42e2497b063FDC47f97dF11c2fd8A2AAd75));
-        addEleitor(address(0x5ce66Af146Bf02AaB10100C9f2BFfBB0b3626635));
+        addCandidato("Manoela","Mais Cloud",address(0xf9Ff6C8fBDf4bed17C5c2E4504e22fCe3225F1eD));
+        addCandidato("Wesley","Mais Raspberry Pi",address(0x20d686Cb5b4e282614BC08E02917E2fba6d32296));
+        addCandidato("David","Mais Node / React",address(0xA1DaBAe16616526F08E921FB1D03C2814De32b68));
+        addEleitor(address(0x617DeD1392499354fD091F1F2c6Eb71e8b937CbC));
+        addEleitor(address(0xe76B54d33B9F6f2f35e51708c0C94511CEaC9098));
+        addEleitor(address(0x35E55be62Bd30be203090DfA12F26490e55Ec779));
+        addEleitor(address(0xf9Ff6C8fBDf4bed17C5c2E4504e22fCe3225F1eD));
+        addEleitor(address(0x20d686Cb5b4e282614BC08E02917E2fba6d32296));
     }
 
     event eventoVotacaoCandidato (
         uint indexed _CandidatoId
     );
 
-    function addEleitor(address _conta) private{
+    function addEleitor(address _conta) private {
         //Garante que apenas o criador do contrato (eleicao) possa adicionar novos eleitores
         require(criador == msg.sender, "Somente o criador do contrato pode adicionar novos eleitores");
         
+        // Cria um novo eleitor
+        Eleitores[_conta] = Eleitor(totalEleitores, _conta, false);
         // Adiciona 1 nos valores de id
         totalEleitores ++;
-        // Cria um novo eleitor
-        Eleitores[_conta] = Eleitor(_conta, false);
     }
 
-    function addCandidato (string memory _name, string memory _proposta) private {
+    function addCandidato (string memory _name, string memory _proposta, address _conta) private {
         //Garante que apenas o criador do contrato (eleicao) possa adicionar novos candidatos
         require(criador == msg.sender, "Somente o criador do contrato pode adicionar novos candidatos");
         
+        // Cria um novo candidato
+        Candidatos[totalCandidatos] = Candidato(totalCandidatos-1, _conta, _name, _proposta, 0);
         // Adiciona 1 nos valores de id
         totalCandidatos ++;
-        // Cria um novo candidato
-        Candidatos[totalCandidatos] = Candidato(totalCandidatos-1, _name, _proposta, 0);
     }
 
     function vote (uint _CandidatoId) public {
+        // Garante que o eleitor esta na lista de eleitores
+        require(Eleitores[msg.sender].id >= 0 && Eleitores[msg.sender].id < totalEleitores, "Você não tem direito de votar");
+
         // Garante que a pessoa ainda não votou
         // Caso ja tinha votado, ele sai da funcao
         require(!Eleitores[msg.sender].votou, "Você já votou");
 
         // Garante que o candidato exista
         // Caso o candidato nao exista, ele sai da funcao
-        require(_CandidatoId > 0 && _CandidatoId <= totalCandidatos, "Candidato inexistente");
+        require(_CandidatoId >= 0 && _CandidatoId < totalCandidatos, "Candidato inexistente");
 
         // Muda o estado do eleitor dizendo que ele votou
         Eleitores[msg.sender].votou = true;
@@ -117,20 +127,12 @@ contract Election {
         return Eleitores[_conta].votou;
     }
 
-    // function listaCandidatos() public view returns (Candidato[] memory){
-    //     Candidato[] memory ordemVencedores = new Candidato[](totalCandidatos);
-        
-    //     // FAZER ALGORITMO DE SORTING
-    //     // for (uint i = 0; i < totalCandidatos; i++) {
-    //     //     for (uint j = 0; j < totalCandidatos; j++) {
-    //     //         if (Candidatos[i].contagem > ordemVencedores[j].contagem) {
-    //     //             Candidato temp = ordemVencedores[j];
-    //     //             ordemVencedores[j] = Candidatos[i];
-
-    //     //         }
-    //     //     }
-    //     // } 
-
-    //     return (ordemVencedores);
-    // }
+    function todosCandidatos() public view returns (address[] memory){
+        // Retorna uma lista com todos os ids de 
+        address[] memory ret = new address[](totalCandidatos);
+        for (uint i = 0; i < totalCandidatos; i++) {
+            ret[i] = Candidatos[i].conta;
+        }
+        return ret;
+    }
 }
