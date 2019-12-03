@@ -1,7 +1,8 @@
 pragma solidity >=0.4.2 <0.7.0;
 
-//Referencia para o codigo:
-//https://www.dappuniversity.com/articles/the-ultimate-ethereum-dapp-tutorial
+// Referencia para o codigo:
+// https://www.dappuniversity.com/articles/the-ultimate-ethereum-dapp-tutorial
+// https://ethereum.stackexchange.com/questions/65589/return-a-mapping-in-a-getall-function
 
 //truffle migrate --reset
 //truffle console
